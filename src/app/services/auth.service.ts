@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { User } from '../models/user';
 import { environment } from '../../environments/environment';
+import { SessionStorageService } from './session-storage.service'; // Importa el servicio
 
 const { apiUrl } = environment;
 
@@ -14,10 +15,10 @@ export class AuthService {
   private url = apiUrl + 'login';
   private isAuthenticated: boolean = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private sessionStorageService: SessionStorageService) {}
 
   isLoggedIn(): boolean {
-    return this.isAuthenticated;
+    return this.isAuthenticated || !!localStorage.getItem('email') && !!localStorage.getItem('token');
   }
 
   login(user: User): Promise<boolean> {
@@ -32,6 +33,13 @@ export class AuthService {
           // Lógica de respuesta exitosa, ajusta según lo que devuelve tu API
           this.loggedInUser = user;
           this.isAuthenticated = true;
+
+          // Guardar el email y el token en localStorage
+          const email = response.identity?.email || '';
+          const authToken = response.token;
+          localStorage.setItem('email', email);
+          localStorage.setItem('token', authToken);
+
           console.log(user);
           resolve(true);
         },
